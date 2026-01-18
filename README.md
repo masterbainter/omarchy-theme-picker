@@ -2,7 +2,22 @@
 
 A web-based theme picker for [Omarchy](https://github.com/omacom-io/omarchy) - browse, preview, and install themes with a single click.
 
-![Theme Picker](https://raw.githubusercontent.com/omacom-io/omarchy/main/preview.png)
+## Screenshots
+
+### Installed Themes
+![Installed Themes](screenshots/01-installed-themes.png)
+
+### Available Themes (One-Click Install)
+![Available Themes](screenshots/02-available-themes.png)
+
+### Installation Progress Modal
+![Install Modal](screenshots/06-install-modal.png)
+
+### Search & Filter
+![Search](screenshots/05-search.png)
+
+### Light Theme Filter
+![Light Themes](screenshots/04-light-themes.png)
 
 ## Features
 
@@ -11,8 +26,9 @@ A web-based theme picker for [Omarchy](https://github.com/omacom-io/omarchy) - b
 - **One-Click Apply** - Switch between installed themes instantly
 - **Dark/Light Filter** - Filter themes by mode
 - **Search** - Find themes by name
-- **Optimized Previews** - Preview images are cached locally as WebP for fast loading
+- **Optimized Previews** - Preview images are cached locally as WebP for fast loading (~98% size reduction)
 - **Installation Progress** - Modal showing step-by-step installation status
+- **Back to Top** - Slick progress-ring button with glassmorphism design
 
 ## Installation
 
@@ -41,6 +57,7 @@ To launch as a borderless webapp with a keyboard shortcut:
 1. Copy the desktop entry:
 ```bash
 cp omarchy-themes.desktop ~/.local/share/applications/
+# Edit the Exec path to point to your installation
 ```
 
 2. Add to your Hyprland config (`~/.config/hypr/bindings.conf`):
@@ -64,6 +81,10 @@ bindd = SUPER, T, Theme Picker, exec, /path/to/omarchy-theme-picker/launch.sh
 | `/api/themes/install` | POST | Install a theme from GitHub |
 | `/api/themes/{name}/preview` | GET | Get theme preview image |
 | `/api/sync-previews` | POST | Cache all preview images locally |
+
+## Port Handling
+
+The server automatically finds a free port starting from 8420. If that port is in use, it increments until it finds an available one. The active port is written to `.port` for the launch script to read.
 
 ## License
 
