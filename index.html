@@ -486,6 +486,81 @@
             cursor: not-allowed;
         }
 
+        /* Back to Top Button */
+        .back-to-top {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            background: rgba(78, 205, 196, 0.15);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(78, 205, 196, 0.3);
+            cursor: pointer;
+            z-index: 1500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(20px) scale(0.8);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3),
+                        0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+        }
+
+        .back-to-top.visible {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0) scale(1);
+        }
+
+        .back-to-top:hover {
+            background: rgba(78, 205, 196, 0.25);
+            border-color: rgba(78, 205, 196, 0.5);
+            transform: translateY(-2px) scale(1.05);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4),
+                        0 0 20px rgba(78, 205, 196, 0.2),
+                        0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+        }
+
+        .back-to-top:active {
+            transform: translateY(0) scale(0.98);
+        }
+
+        .back-to-top svg {
+            width: 22px;
+            height: 22px;
+            stroke: #4ecdc4;
+            stroke-width: 2.5;
+            fill: none;
+            transition: transform 0.3s ease;
+        }
+
+        .back-to-top:hover svg {
+            transform: translateY(-2px);
+        }
+
+        /* Progress ring */
+        .back-to-top .progress-ring {
+            position: absolute;
+            width: 52px;
+            height: 52px;
+            transform: rotate(-90deg);
+        }
+
+        .back-to-top .progress-ring circle {
+            fill: none;
+            stroke: #4ecdc4;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-dasharray: 150;
+            stroke-dashoffset: 150;
+            transition: stroke-dashoffset 0.1s ease-out;
+        }
+
         @media (max-width: 600px) {
             body {
                 padding: 1rem;
@@ -526,6 +601,16 @@
     </div>
 
     <div class="toast" id="toast"></div>
+
+    <!-- Back to Top Button -->
+    <button class="back-to-top" id="back-to-top" onclick="scrollToTop()" aria-label="Back to top">
+        <svg class="progress-ring" viewBox="0 0 52 52">
+            <circle cx="26" cy="26" r="24"></circle>
+        </svg>
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 19V5M5 12l7-7 7 7" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+    </button>
 
     <!-- Install Modal -->
     <div class="modal-overlay" id="install-modal">
@@ -908,6 +993,49 @@
                 renderThemes();
             });
         });
+
+        // Back to Top functionality
+        const backToTopBtn = document.getElementById('back-to-top');
+        const progressCircle = backToTopBtn.querySelector('.progress-ring circle');
+        const circumference = 2 * Math.PI * 24; // r=24
+        progressCircle.style.strokeDasharray = circumference;
+
+        function updateBackToTop() {
+            const scrollTop = window.scrollY;
+            const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+            const scrollPercent = docHeight > 0 ? scrollTop / docHeight : 0;
+
+            // Show/hide button
+            if (scrollTop > 300) {
+                backToTopBtn.classList.add('visible');
+            } else {
+                backToTopBtn.classList.remove('visible');
+            }
+
+            // Update progress ring
+            const offset = circumference - (scrollPercent * circumference);
+            progressCircle.style.strokeDashoffset = offset;
+        }
+
+        function scrollToTop() {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        }
+
+        // Throttled scroll listener for performance
+        let scrollTimeout;
+        window.addEventListener('scroll', () => {
+            if (scrollTimeout) return;
+            scrollTimeout = setTimeout(() => {
+                updateBackToTop();
+                scrollTimeout = null;
+            }, 10);
+        }, { passive: true });
+
+        // Initial check
+        updateBackToTop();
 
         // Load themes on page load
         loadThemes();
