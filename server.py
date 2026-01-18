@@ -615,6 +615,25 @@ def index():
     return Path(__file__).parent.joinpath("index.html").read_text()
 
 
+def find_free_port(start_port: int = 8420, max_attempts: int = 100) -> int:
+    """Find a free port starting from start_port."""
+    import socket
+    for port in range(start_port, start_port + max_attempts):
+        try:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                s.bind(("127.0.0.1", port))
+                return port
+        except OSError:
+            continue
+    raise RuntimeError(f"No free port found in range {start_port}-{start_port + max_attempts}")
+
+
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="127.0.0.1", port=8420)
+
+    port = find_free_port()
+    port_file = Path(__file__).parent / ".port"
+    port_file.write_text(str(port))
+
+    print(f"Starting server on http://127.0.0.1:{port}")
+    uvicorn.run(app, host="127.0.0.1", port=port)

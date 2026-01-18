@@ -9,6 +9,9 @@ env/
 # Cache (generated locally)
 cache/
 
+# Runtime port file
+.port
+
 # Logs
 *.log
 nohup.out
