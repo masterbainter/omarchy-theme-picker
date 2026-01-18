@@ -1,0 +1,11 @@
+[Desktop Entry]
+Version=1.0
+Name=Theme Picker
+Comment=Omarchy Theme Picker
+Exec=/path/to/omarchy-theme-picker/launch.sh
+Terminal=false
+Type=Application
+Icon=preferences-desktop-theme
+Categories=Settings;DesktopSettings;
+Keywords=theme;omarchy;style;appearance;
+StartupNotify=true

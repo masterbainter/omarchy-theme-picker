@@ -18,7 +18,7 @@ A web-based theme picker for [Omarchy](https://github.com/omacom-io/omarchy) - b
 
 ```bash
 # Clone the repository
-git clone https://github.com/YOUR_USERNAME/omarchy-theme-picker.git
+git clone https://github.com/masterbainter/omarchy-theme-picker.git
 cd omarchy-theme-picker
 
 # Create virtual environment
