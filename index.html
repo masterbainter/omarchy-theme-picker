@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Omarchy Theme Picker</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: #1a1a1a;
+            color: #e0e0e0;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 300;
+            letter-spacing: 0.1em;
+            margin-bottom: 0.5rem;
+        }
+
+        .current-theme {
+            color: #888;
+            font-size: 1rem;
+        }
+
+        .current-theme span {
+            color: #4ecdc4;
+            font-weight: 500;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .search-box {
+            padding: 0.75rem 1rem;
+            font-size: 1rem;
+            border: 1px solid #333;
+            border-radius: 8px;
+            background: #252525;
+            color: #e0e0e0;
+            width: 300px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .search-box:focus {
+            border-color: #4ecdc4;
+        }
+
+        .filter-btn {
+            padding: 0.75rem 1.25rem;
+            font-size: 0.9rem;
+            border: 1px solid #333;
+            border-radius: 8px;
+            background: #252525;
+            color: #e0e0e0;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .filter-btn:hover {
+            background: #333;
+        }
+
+        .filter-btn.active {
+            background: #4ecdc4;
+            color: #1a1a1a;
+            border-color: #4ecdc4;
+        }
+
+        .filter-btn.available-btn.active {
+            background: #ff6b6b;
+            border-color: #ff6b6b;
+        }
+
+        .mode-controls {
+            margin-top: -1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .mode-btn {
+            padding: 0.5rem 1rem;
+            font-size: 0.85rem;
+            border: 1px solid #333;
+            border-radius: 6px;
+            background: #252525;
+            color: #e0e0e0;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .mode-btn:hover {
+            background: #333;
+        }
+
+        .mode-btn.active {
+            background: #666;
+            border-color: #666;
+        }
+
+        .mode-btn.dark-btn.active {
+            background: #2d2d4a;
+            border-color: #4a4a8a;
+        }
+
+        .mode-btn.light-btn.active {
+            background: #c9b896;
+            border-color: #c9b896;
+            color: #1a1a1a;
+        }
+
+        .sync-btn {
+            padding: 0.75rem 1.25rem;
+            font-size: 0.9rem;
+            border: 1px solid #6b5b95;
+            border-radius: 8px;
+            background: #6b5b95;
+            color: #fff;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .sync-btn:hover {
+            background: #7d6ba3;
+        }
+
+        .sync-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .sync-btn.syncing {
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        .badge-count {
+            background: rgba(0,0,0,0.2);
+            padding: 0.1rem 0.4rem;
+            border-radius: 4px;
+            margin-left: 0.3rem;
+            font-size: 0.8rem;
+        }
+
+        .theme-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 1.5rem;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        .theme-card {
+            background: #252525;
+            border-radius: 12px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            border: 2px solid transparent;
+        }
+
+        .theme-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+        }
+
+        .theme-card.current {
+            border-color: #4ecdc4;
+        }
+
+        .theme-card.available {
+            border-color: #ff6b6b;
+            opacity: 0.85;
+        }
+
+        .theme-card.available:hover {
+            opacity: 1;
+        }
+
+        .theme-card.applying, .theme-card.installing {
+            opacity: 0.7;
+            pointer-events: none;
+        }
+
+        .theme-preview {
+            width: 100%;
+            aspect-ratio: 16/10;
+            object-fit: cover;
+            background: #333;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .theme-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .no-preview {
+            color: #666;
+            font-size: 0.9rem;
+            text-align: center;
+            padding: 1rem;
+        }
+
+        .theme-info {
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .theme-name {
+            font-size: 1.1rem;
+            font-weight: 500;
+        }
+
+        .theme-badge {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            background: #4ecdc4;
+            color: #1a1a1a;
+            font-weight: 600;
+        }
+
+        .theme-badge.install {
+            background: #ff6b6b;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 4rem;
+            color: #666;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: #333;
+            color: #e0e0e0;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .toast.success {
+            background: #2d5a4a;
+        }
+
+        .toast.error {
+            background: #5a2d2d;
+        }
+
+        /* Install Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s, visibility 0.3s;
+        }
+
+        .modal-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal {
+            background: #252525;
+            border-radius: 16px;
+            padding: 2rem;
+            max-width: 480px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            transform: scale(0.9);
+            transition: transform 0.3s;
+        }
+
+        .modal-overlay.show .modal {
+            transform: scale(1);
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .modal-icon.installing {
+            background: linear-gradient(135deg, #6b5b95, #4ecdc4);
+            animation: iconPulse 2s infinite;
+        }
+
+        .modal-icon.success {
+            background: #2d5a4a;
+        }
+
+        .modal-icon.error {
+            background: #5a2d2d;
+        }
+
+        @keyframes iconPulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.8; transform: scale(0.95); }
+        }
+
+        .modal-title {
+            font-size: 1.4rem;
+            font-weight: 500;
+        }
+
+        .modal-subtitle {
+            color: #888;
+            font-size: 0.9rem;
+            margin-top: 0.25rem;
+        }
+
+        .modal-steps {
+            margin-bottom: 1.5rem;
+        }
+
+        .step {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 0;
+            color: #666;
+            border-bottom: 1px solid #333;
+        }
+
+        .step:last-child {
+            border-bottom: none;
+        }
+
+        .step.active {
+            color: #e0e0e0;
+        }
+
+        .step.complete {
+            color: #4ecdc4;
+        }
+
+        .step.error {
+            color: #ff6b6b;
+        }
+
+        .step-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            background: #333;
+            flex-shrink: 0;
+        }
+
+        .step.active .step-icon {
+            background: #4ecdc4;
+            color: #1a1a1a;
+            animation: spin 1s linear infinite;
+        }
+
+        .step.complete .step-icon {
+            background: #4ecdc4;
+            color: #1a1a1a;
+        }
+
+        .step.error .step-icon {
+            background: #ff6b6b;
+            color: #1a1a1a;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .step-text {
+            flex-grow: 1;
+        }
+
+        .modal-error {
+            background: #3a2020;
+            border: 1px solid #5a2d2d;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            font-size: 0.85rem;
+            color: #ff9999;
+            max-height: 150px;
+            overflow-y: auto;
+            font-family: monospace;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.75rem;
+        }
+
+        .modal-btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+        }
+
+        .modal-btn-primary {
+            background: #4ecdc4;
+            color: #1a1a1a;
+        }
+
+        .modal-btn-primary:hover {
+            background: #5fd9d0;
+        }
+
+        .modal-btn-secondary {
+            background: #333;
+            color: #e0e0e0;
+        }
+
+        .modal-btn-secondary:hover {
+            background: #444;
+        }
+
+        .modal-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        @media (max-width: 600px) {
+            body {
+                padding: 1rem;
+            }
+
+            h1 {
+                font-size: 1.8rem;
+            }
+
+            .theme-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>OMARCHY THEMES</h1>
+        <p class="current-theme">Current: <span id="current-theme">loading...</span></p>
+    </header>
+
+    <div class="controls">
+        <input type="text" class="search-box" id="search" placeholder="Search themes...">
+        <button class="filter-btn active" data-filter="installed">Installed <span class="badge-count" id="installed-count">0</span></button>
+        <button class="filter-btn available-btn" data-filter="available">Available <span class="badge-count" id="available-count">0</span></button>
+        <button class="filter-btn" data-filter="all">All</button>
+        <button class="sync-btn" id="sync-btn" onclick="syncPreviews()" title="Download preview images for faster loading">Sync Previews</button>
+    </div>
+
+    <div class="controls mode-controls">
+        <button class="mode-btn active" data-mode="all">All Modes</button>
+        <button class="mode-btn dark-btn" data-mode="dark">Dark</button>
+        <button class="mode-btn light-btn" data-mode="light">Light</button>
+    </div>
+
+    <div class="theme-grid" id="theme-grid">
+        <div class="loading">Loading themes...</div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <!-- Install Modal -->
+    <div class="modal-overlay" id="install-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-icon installing" id="modal-icon">📦</div>
+                <div>
+                    <div class="modal-title" id="modal-title">Installing Theme</div>
+                    <div class="modal-subtitle" id="modal-subtitle">theme-name</div>
+                </div>
+            </div>
+            <div class="modal-steps" id="modal-steps">
+                <div class="step" data-step="clone">
+                    <div class="step-icon">1</div>
+                    <div class="step-text">Cloning repository from GitHub</div>
+                </div>
+                <div class="step" data-step="files">
+                    <div class="step-icon">2</div>
+                    <div class="step-text">Copying theme files</div>
+                </div>
+                <div class="step" data-step="extensions">
+                    <div class="step-icon">3</div>
+                    <div class="step-text">Installing VS Code extensions</div>
+                </div>
+                <div class="step" data-step="apply">
+                    <div class="step-icon">4</div>
+                    <div class="step-text">Applying theme</div>
+                </div>
+            </div>
+            <div class="modal-error" id="modal-error" style="display: none;"></div>
+            <div class="modal-actions">
+                <button class="modal-btn modal-btn-secondary" id="modal-close" onclick="closeInstallModal()" disabled>Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let installedThemes = [];
+        let availableThemes = [];
+        let currentFilter = 'installed';
+        let currentMode = 'all';
+        let searchQuery = '';
+
+        async function loadThemes() {
+            try {
+                const [installedRes, availableRes] = await Promise.all([
+                    fetch('/api/themes'),
+                    fetch('/api/available')
+                ]);
+
+                const installedData = await installedRes.json();
+                const availableData = await availableRes.json();
+
+                installedThemes = installedData.themes;
+                availableThemes = availableData.available;
+
+                document.getElementById('current-theme').textContent = installedData.current || 'none';
+                document.getElementById('installed-count').textContent = installedThemes.length;
+                document.getElementById('available-count').textContent = availableThemes.length;
+
+                renderThemes();
+            } catch (error) {
+                document.getElementById('theme-grid').innerHTML =
+                    '<div class="loading">Failed to load themes</div>';
+            }
+        }
+
+        function renderThemes() {
+            const grid = document.getElementById('theme-grid');
+            let themes = [];
+
+            if (currentFilter === 'installed') {
+                themes = installedThemes.map(t => ({ ...t, type: 'installed' }));
+            } else if (currentFilter === 'available') {
+                themes = availableThemes.map(t => ({ ...t, type: 'available', has_preview: false }));
+            } else {
+                themes = [
+                    ...installedThemes.map(t => ({ ...t, type: 'installed' })),
+                    ...availableThemes.map(t => ({ ...t, type: 'available', has_preview: false }))
+                ];
+            }
+
+            if (searchQuery) {
+                const query = searchQuery.toLowerCase();
+                themes = themes.filter(t => t.name.toLowerCase().includes(query));
+            }
+
+            if (currentMode !== 'all') {
+                themes = themes.filter(t => t.mode === currentMode);
+            }
+
+            if (themes.length === 0) {
+                grid.innerHTML = '<div class="loading">No themes found</div>';
+                return;
+            }
+
+            grid.innerHTML = themes.map(theme => {
+                const isInstalled = theme.type === 'installed';
+                const cardClass = isInstalled
+                    ? (theme.is_current ? 'current' : '')
+                    : 'available';
+                const onclick = isInstalled
+                    ? `applyTheme('${theme.name}')`
+                    : `installTheme('${theme.name}', '${theme.url || ''}')`;
+
+                return `
+                    <div class="theme-card ${cardClass}"
+                         data-theme="${theme.name}"
+                         onclick="${onclick}">
+                        <div class="theme-preview">
+                            ${isInstalled && theme.has_preview
+                                ? `<img src="/api/themes/${theme.name}/preview" alt="${theme.name}" loading="lazy">`
+                                : (!isInstalled && theme.preview_url
+                                    ? `<img src="${theme.preview_url}" alt="${theme.name}" loading="lazy" onerror="this.parentElement.innerHTML='<span class=\\'no-preview\\'>Click to install</span>'">`
+                                    : `<span class="no-preview">${isInstalled ? 'No preview' : 'Click to install'}</span>`
+                                )
+                            }
+                        </div>
+                        <div class="theme-info">
+                            <span class="theme-name">${theme.name}</span>
+                            ${theme.is_current
+                                ? '<span class="theme-badge">CURRENT</span>'
+                                : (!isInstalled ? '<span class="theme-badge install">INSTALL</span>' : '')
+                            }
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function applyTheme(name) {
+            const card = document.querySelector(`[data-theme="${name}"]`);
+            if (card) card.classList.add('applying');
+
+            try {
+                const response = await fetch('/api/themes/apply', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showToast(`Theme "${name}" applied!`, 'success');
+                    installedThemes.forEach(t => t.is_current = t.name === name);
+                    document.getElementById('current-theme').textContent = name;
+                    renderThemes();
+                } else {
+                    showToast(data.detail || 'Failed to apply theme', 'error');
+                }
+            } catch (error) {
+                showToast('Failed to apply theme', 'error');
+            }
+
+            if (card) card.classList.remove('applying');
+        }
+
+        // Install Modal Functions
+        let installAbortController = null;
+
+        function showInstallModal(themeName) {
+            const modal = document.getElementById('install-modal');
+            const icon = document.getElementById('modal-icon');
+            const title = document.getElementById('modal-title');
+            const subtitle = document.getElementById('modal-subtitle');
+            const closeBtn = document.getElementById('modal-close');
+            const errorBox = document.getElementById('modal-error');
+
+            // Reset modal state
+            title.textContent = 'Installing Theme';
+            subtitle.textContent = themeName;
+            icon.className = 'modal-icon installing';
+            icon.textContent = '📦';
+            closeBtn.disabled = true;
+            errorBox.style.display = 'none';
+
+            // Reset all steps
+            document.querySelectorAll('.step').forEach(step => {
+                step.className = 'step';
+                const iconEl = step.querySelector('.step-icon');
+                iconEl.textContent = iconEl.textContent.replace('✓', '').replace('✗', '').trim() ||
+                    ['1', '2', '3', '4'][Array.from(step.parentElement.children).indexOf(step)];
+            });
+
+            modal.classList.add('show');
+        }
+
+        function updateInstallStep(stepName, status) {
+            const step = document.querySelector(`[data-step="${stepName}"]`);
+            if (!step) return;
+
+            const iconEl = step.querySelector('.step-icon');
+
+            // Clear previous states
+            step.classList.remove('active', 'complete', 'error');
+
+            if (status === 'active') {
+                step.classList.add('active');
+                iconEl.textContent = '⟳';
+            } else if (status === 'complete') {
+                step.classList.add('complete');
+                iconEl.textContent = '✓';
+            } else if (status === 'error') {
+                step.classList.add('error');
+                iconEl.textContent = '✗';
+            }
+        }
+
+        function completeInstallModal(success, errorMessage = '') {
+            const icon = document.getElementById('modal-icon');
+            const title = document.getElementById('modal-title');
+            const closeBtn = document.getElementById('modal-close');
+            const errorBox = document.getElementById('modal-error');
+
+            closeBtn.disabled = false;
+
+            if (success) {
+                icon.className = 'modal-icon success';
+                icon.textContent = '✓';
+                title.textContent = 'Installation Complete!';
+            } else {
+                icon.className = 'modal-icon error';
+                icon.textContent = '✗';
+                title.textContent = 'Installation Failed';
+
+                if (errorMessage) {
+                    errorBox.textContent = errorMessage;
+                    errorBox.style.display = 'block';
+                }
+            }
+        }
+
+        function closeInstallModal() {
+            const modal = document.getElementById('install-modal');
+            const closeBtn = document.getElementById('modal-close');
+            // Only close if not still installing
+            if (!closeBtn.disabled) {
+                modal.classList.remove('show');
+            }
+        }
+
+        // Close modal on escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeInstallModal();
+            }
+        });
+
+        // Close modal when clicking outside
+        document.getElementById('install-modal').addEventListener('click', (e) => {
+            if (e.target.classList.contains('modal-overlay')) {
+                closeInstallModal();
+            }
+        });
+
+        async function installTheme(name, url) {
+            const card = document.querySelector(`[data-theme="${name}"]`);
+            if (card) {
+                card.classList.add('installing');
+            }
+
+            showInstallModal(name);
+
+            // Simulate step progression (the actual install is one API call)
+            // We'll show realistic timing for each step
+            const steps = ['clone', 'files', 'extensions', 'apply'];
+            let currentStep = 0;
+
+            // Start first step immediately
+            updateInstallStep(steps[0], 'active');
+
+            // Progress through steps with timing
+            const stepInterval = setInterval(() => {
+                if (currentStep < steps.length - 1) {
+                    updateInstallStep(steps[currentStep], 'complete');
+                    currentStep++;
+                    updateInstallStep(steps[currentStep], 'active');
+                }
+            }, 2000);
+
+            try {
+                const response = await fetch('/api/themes/install', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, url })
+                });
+
+                clearInterval(stepInterval);
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Mark all steps complete
+                    steps.forEach(s => updateInstallStep(s, 'complete'));
+                    completeInstallModal(true);
+
+                    // Reload themes after a brief pause
+                    setTimeout(async () => {
+                        await loadThemes();
+                    }, 500);
+                } else {
+                    // Mark current step as error
+                    updateInstallStep(steps[currentStep], 'error');
+                    completeInstallModal(false, data.detail || 'Unknown error occurred');
+
+                    if (card) {
+                        card.classList.remove('installing');
+                    }
+                }
+            } catch (error) {
+                clearInterval(stepInterval);
+                updateInstallStep(steps[currentStep], 'error');
+                completeInstallModal(false, error.message || 'Network error');
+
+                if (card) {
+                    card.classList.remove('installing');
+                }
+            }
+        }
+
+        function showToast(message, type = '') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = `toast ${type} show`;
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        async function syncPreviews() {
+            const btn = document.getElementById('sync-btn');
+            btn.disabled = true;
+            btn.classList.add('syncing');
+            btn.textContent = 'Syncing...';
+
+            showToast('Syncing preview images...', '');
+
+            try {
+                const response = await fetch('/api/sync-previews', { method: 'POST' });
+                const data = await response.json();
+
+                if (data.status === 'already running') {
+                    showToast('Sync already in progress', '');
+                } else {
+                    showToast('Sync started - previews downloading in background', 'success');
+                    // Poll for completion
+                    setTimeout(async () => {
+                        await loadThemes();
+                        showToast('Preview sync complete!', 'success');
+                    }, 5000);
+                }
+            } catch (error) {
+                showToast('Failed to start sync', 'error');
+            }
+
+            btn.disabled = false;
+            btn.classList.remove('syncing');
+            btn.textContent = 'Sync Previews';
+        }
+
+        // Event listeners
+        document.getElementById('search').addEventListener('input', (e) => {
+            searchQuery = e.target.value;
+            renderThemes();
+        });
+
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentFilter = btn.dataset.filter;
+                renderThemes();
+            });
+        });
+
+        document.querySelectorAll('.mode-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentMode = btn.dataset.mode;
+                renderThemes();
+            });
+        });
+
+        // Load themes on page load
+        loadThemes();
+    </script>
+</body>
+</html>
