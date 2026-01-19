@@ -32,6 +32,21 @@ A web-based theme picker for [Omarchy](https://github.com/omacom-io/omarchy) - b
 
 ## Installation
 
+### Quick Install (Recommended)
+
+```bash
+git clone https://github.com/masterbainter/omarchy-theme-picker.git
+cd omarchy-theme-picker
+./install.sh
+```
+
+The install script will:
+- Set up the Python virtual environment and dependencies
+- Install the desktop entry
+- Add SUPER+T keybinding to Hyprland (optional)
+
+### Manual Installation
+
 ```bash
 # Clone the repository
 git clone https://github.com/masterbainter/omarchy-theme-picker.git
@@ -50,9 +65,9 @@ python server.py
 
 Then open http://127.0.0.1:8420 in your browser.
 
-## Desktop Integration (Hyprland)
+### Desktop Integration (Hyprland)
 
-To launch as a borderless webapp with a keyboard shortcut:
+If you used `install.sh`, this is already configured. For manual setup:
 
 1. Copy the desktop entry:
 ```bash
