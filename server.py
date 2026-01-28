@@ -237,6 +237,52 @@ def list_themes():
     }
 
 
+def patch_hyprland_conf():
+    """Patch deprecated Hyprland syntax in the current theme's hyprland.conf.
+
+    Fixes compatibility with Hyprland 0.53+:
+    - windowrulev2 -> windowrule
+    - Comma-separated fields -> space-separated
+    - Strip ^()$ regex anchors from class: and title: values
+    """
+    conf = Path.home() / ".config/omarchy/current/theme/hyprland.conf"
+    if not conf.exists():
+        return
+
+    text = conf.read_text()
+    lines = text.splitlines()
+    new_lines = []
+    changed = False
+
+    for line in lines:
+        stripped = line.strip()
+        # Match windowrule or windowrulev2 lines
+        m = re.match(r'^(windowrulev?2?)\s*=\s*(.+)$', stripped)
+        if m:
+            keyword, rest = m.groups()
+            if keyword == 'windowrulev2':
+                keyword = 'windowrule'
+                changed = True
+            # Split on commas, strip each field
+            fields = [f.strip() for f in rest.split(',')]
+            # Strip ^()$ anchors from class: and title: values
+            cleaned = []
+            for f in fields:
+                new_f = re.sub(r'((?:class|title):)\^\((.+?)\)\$', r'\1\2', f)
+                if new_f != f:
+                    changed = True
+                cleaned.append(new_f)
+            new_line = f'{keyword} = {" ".join(cleaned)}'
+            if new_line != stripped:
+                changed = True
+            new_lines.append(new_line)
+        else:
+            new_lines.append(line)
+
+    if changed:
+        conf.write_text('\n'.join(new_lines) + '\n')
+
+
 @app.post("/api/themes/apply")
 def apply_theme(request: ThemeRequest):
     """Apply a theme by name."""
@@ -258,6 +304,8 @@ def apply_theme(request: ThemeRequest):
                 status_code=500,
                 detail=f"Failed to apply theme: {result.stderr}"
             )
+
+        patch_hyprland_conf()
 
         return {
             "success": True,
